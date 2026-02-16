@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Patient Turn Alert</title>
+
 <style>
 body{
     margin:0;
@@ -10,66 +11,125 @@ body{
     background:linear-gradient(to right,#eaf4ff,#ffffff);
     text-align:center;
 }
+
 header{
     padding:30px;
     font-size:28px;
     font-weight:bold;
     color:#2b7cff;
 }
+
 .card{
     background:white;
-    width:340px;
+    width:360px;
     margin:40px auto;
     padding:30px;
     border-radius:18px;
     box-shadow:0 12px 25px rgba(0,0,0,0.1);
 }
-button{
-    padding:10px 20px;
+
+select, button{
+    padding:10px;
+    border-radius:10px;
     border:none;
-    border-radius:12px;
+    margin-top:10px;
+}
+
+button{
     background:#2b7cff;
     color:white;
-    font-size:14px;
     cursor:pointer;
 }
+
 button:hover{
     background:#1f5edb;
 }
+
 #timer{
     font-size:18px;
     margin-top:15px;
     font-weight:bold;
 }
+
+/* กล่องแจ้งเตือน */
+#alertBox{
+    display:none;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.2);
+    z-index:999;
+}
 </style>
 </head>
+
 <body>
 
 <header>Patient Turn Alert</header>
 
 <div class="card">
 <h3>ระบบแจ้งเตือนเปลี่ยนท่า</h3>
-<p>ระบบจะนับถอยหลัง 30 วินาที</p>
+
+<select id="timeSelect">
+<option value="30">30 วินาที</option>
+<option value="1800">30 นาที</option>
+<option value="3600">1 ชั่วโมง</option>
+<option value="7200">2 ชั่วโมง</option>
+</select>
+
+<br>
 <button onclick="startTimer()">เริ่มระบบ</button>
-<p id="timer">เวลาเหลือ: 30 วินาที</p>
+
+<p id="timer">ยังไม่ได้เริ่ม</p>
+</div>
+
+<div id="alertBox">
+<h2>⚠️ ถึงเวลาเปลี่ยนท่า!</h2>
+<button onclick="stopAlert()">ยืนยันว่าเปลี่ยนท่าแล้ว</button>
 </div>
 
 <script>
-let time = 30;
 let countdown;
+let timeLeft;
+let alarmSound = new Audio("https://www.soundjay.com/buttons/beep-07.wav");
 
 function startTimer(){
-    time = 30;
     clearInterval(countdown);
-    countdown = setInterval(function(){
-        time--;
-        document.getElementById("timer").innerHTML = "เวลาเหลือ: " + time + " วินาที";
+    timeLeft = document.getElementById("timeSelect").value;
 
-        if(time <= 0){
-            alert("ถึงเวลาเปลี่ยนท่าผู้ป่วย!");
-            time = 30;
+    countdown = setInterval(function(){
+        timeLeft--;
+        document.getElementById("timer").innerHTML =
+        "เวลาเหลือ: " + formatTime(timeLeft);
+
+        if(timeLeft <= 0){
+            clearInterval(countdown);
+            showAlert();
         }
     },1000);
+}
+
+function formatTime(seconds){
+    let h = Math.floor(seconds / 3600);
+    let m = Math.floor((seconds % 3600) / 60);
+    let s = seconds % 60;
+    return h+"ชม "+m+"น "+s+"วิ";
+}
+
+function showAlert(){
+    document.getElementById("alertBox").style.display="block";
+    alarmSound.loop = true;
+    alarmSound.play();
+}
+
+function stopAlert(){
+    document.getElementById("alertBox").style.display="none";
+    alarmSound.pause();
+    alarmSound.currentTime = 0;
 }
 </script>
 
