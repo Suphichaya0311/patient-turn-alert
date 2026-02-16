@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Patient Turn Alert</title>
+<style>
+body{
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background:linear-gradient(to right,#eaf4ff,#ffffff);
+    text-align:center;
+}
+header{
+    padding:30px;
+    font-size:28px;
+    font-weight:bold;
+    color:#2b7cff;
+}
+.card{
+    background:white;
+    width:340px;
+    margin:40px auto;
+    padding:30px;
+    border-radius:18px;
+    box-shadow:0 12px 25px rgba(0,0,0,0.1);
+}
+button{
+    padding:10px 20px;
+    border:none;
+    border-radius:12px;
+    background:#2b7cff;
+    color:white;
+    font-size:14px;
+    cursor:pointer;
+}
+button:hover{
+    background:#1f5edb;
+}
+#timer{
+    font-size:18px;
+    margin-top:15px;
+    font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<header>Patient Turn Alert</header>
+
+<div class="card">
+<h3>ระบบแจ้งเตือนเปลี่ยนท่า</h3>
+<p>ระบบจะนับถอยหลัง 30 วินาที</p>
+<button onclick="startTimer()">เริ่มระบบ</button>
+<p id="timer">เวลาเหลือ: 30 วินาที</p>
+</div>
+
+<script>
+let time = 30;
+let countdown;
+
+function startTimer(){
+    time = 30;
+    clearInterval(countdown);
+    countdown = setInterval(function(){
+        time--;
+        document.getElementById("timer").innerHTML = "เวลาเหลือ: " + time + " วินาที";
+
+        if(time <= 0){
+            alert("ถึงเวลาเปลี่ยนท่าผู้ป่วย!");
+            time = 30;
+        }
+    },1000);
+}
+</script>
+
+</body>
+</html>
