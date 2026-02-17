@@ -8,6 +8,7 @@ body{
     font-family: Arial;
     text-align:center;
     background:#f4f8fb;
+    margin:0;
 }
 h1{color:#0d3b66;}
 
@@ -23,16 +24,16 @@ button, select{
 .start{background:#2a9d8f;color:white;}
 .stop{background:#e63946;color:white;}
 .camera{background:#457b9d;color:white;}
-.download{background:#6a4c93;color:white;}
+.albumBtn{background:#6a4c93;color:white;}
 
 video{
     margin-top:10px;
     border-radius:10px;
-    width:320px;
+    width:300px;
 }
 
 #countdown{
-    font-size:40px;
+    font-size:42px;
     margin:15px;
     font-weight:bold;
     color:#0d3b66;
@@ -52,6 +53,7 @@ video{
     flex-direction:column;
     font-size:50px;
     animation:pulse 1s infinite;
+    z-index:1000;
 }
 
 @keyframes pulse{
@@ -60,13 +62,25 @@ video{
     100%{transform:scale(1);}
 }
 
-#history{
-    margin-top:20px;
-    text-align:left;
-    width:80%;
-    margin-left:auto;
-    margin-right:auto;
+#album{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:white;
+    overflow:auto;
+    padding:20px;
+    z-index:999;
 }
+
+.snapshot{
+    width:200px;
+    margin:10px;
+    border-radius:10px;
+}
+
 </style>
 </head>
 
@@ -88,7 +102,7 @@ video{
 <br>
 <button class="camera" onclick="startCamera()">เปิดกล้อง</button>
 <button class="stop" onclick="stopCamera()">ปิดกล้อง</button>
-<button class="download" onclick="downloadHistory()">ดาวน์โหลดประวัติ</button>
+<button class="albumBtn" onclick="openAlbum()">ดูอัลบั้ม</button>
 
 <div id="countdown">00:00</div>
 
@@ -100,18 +114,19 @@ video{
     <button onclick="closeAlert()" style="font-size:20px;margin-top:20px;">ปิดแจ้งเตือน</button>
 </div>
 
-<div id="history">
-    <h3>ประวัติการแจ้งเตือน</h3>
-    <ul id="historyList"></ul>
+<div id="album">
+    <h2>อัลบั้มภาพเหตุการณ์</h2>
+    <div id="albumImages"></div>
+    <button onclick="closeAlbum()">ปิด</button>
 </div>
 
 <script>
+
 let countdown;
 let totalTime;
 let interval;
-let stream;
-let lastFrame = null;
-let motionInterval;
+let stream = null;
+let images = [];
 let alertSound = new Audio("https://www.soundjay.com/buttons/beep-07.wav");
 
 function startTimer(){
@@ -144,8 +159,10 @@ function triggerAlert(){
     document.getElementById("alertBox").style.display="flex";
     alertSound.loop = true;
     alertSound.play();
-    takeSnapshot();
-    saveHistory();
+
+    if(stream){
+        takeSnapshot();
+    }
 }
 
 function closeAlert(){
@@ -159,67 +176,54 @@ function startCamera(){
     .then(s=>{
         stream=s;
         document.getElementById("video").srcObject=s;
-        detectMotion();
+    })
+    .catch(()=>{
+        alert("ไม่สามารถเปิดกล้องได้");
     });
 }
 
 function stopCamera(){
     if(stream){
         stream.getTracks().forEach(track=>track.stop());
+        stream=null;
     }
-    clearInterval(motionInterval);
-}
-
-function detectMotion(){
-    motionInterval = setInterval(()=>{
-        let video=document.getElementById("video");
-        let canvas=document.getElementById("canvas");
-        let ctx=canvas.getContext("2d");
-
-        canvas.width=video.videoWidth;
-        canvas.height=video.videoHeight;
-        ctx.drawImage(video,0,0);
-
-        let frame=ctx.getImageData(0,0,canvas.width,canvas.height);
-
-        if(lastFrame){
-            let diff=0;
-            for(let i=0;i<frame.data.length;i+=4){
-                diff+=Math.abs(frame.data[i]-lastFrame.data[i]);
-            }
-            if(diff<5000000){
-                triggerAlert();
-            }
-        }
-        lastFrame=frame;
-    },5000);
 }
 
 function takeSnapshot(){
     let video=document.getElementById("video");
     let canvas=document.getElementById("canvas");
     let ctx=canvas.getContext("2d");
+
+    canvas.width=video.videoWidth;
+    canvas.height=video.videoHeight;
     ctx.drawImage(video,0,0);
+
+    let imageData = canvas.toDataURL("image/png");
+    images.push(imageData);
 }
 
-function saveHistory(){
-    let time=new Date().toLocaleString();
-    let li=document.createElement("li");
-    li.innerText="แจ้งเตือนเมื่อ: "+time;
-    document.getElementById("historyList").appendChild(li);
+function openAlbum(){
+    let container = document.getElementById("albumImages");
+    container.innerHTML = "";
+
+    if(images.length === 0){
+        container.innerHTML = "<p>ยังไม่มีภาพเหตุการณ์</p>";
+    }else{
+        images.forEach(img=>{
+            let image = document.createElement("img");
+            image.src = img;
+            image.className = "snapshot";
+            container.appendChild(image);
+        });
+    }
+
+    document.getElementById("album").style.display="block";
 }
 
-function downloadHistory(){
-    let items=document.querySelectorAll("#historyList li");
-    let text="";
-    items.forEach(i=>text+=i.innerText+"\n");
-
-    let blob=new Blob([text],{type:"text/plain"});
-    let a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="history.txt";
-    a.click();
+function closeAlbum(){
+    document.getElementById("album").style.display="none";
 }
+
 </script>
 
 </body>
