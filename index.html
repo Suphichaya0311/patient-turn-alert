@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Patient Turn Alert</title>
+<title>Patient Turn Alert Pro</title>
 
 <style>
 body{
@@ -13,7 +13,7 @@ body{
 }
 
 header{
-    padding:30px;
+    padding:25px;
     font-size:28px;
     font-weight:bold;
     color:#2b7cff;
@@ -21,9 +21,9 @@ header{
 
 .card{
     background:white;
-    width:360px;
-    margin:40px auto;
-    padding:30px;
+    width:380px;
+    margin:30px auto;
+    padding:25px;
     border-radius:18px;
     box-shadow:0 12px 25px rgba(0,0,0,0.1);
 }
@@ -51,28 +51,50 @@ button:hover{
     font-weight:bold;
 }
 
-/* กล่องแจ้งเตือน */
+video{
+    margin-top:15px;
+    border-radius:12px;
+}
+
 #alertBox{
     display:none;
     position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    background:white;
-    padding:30px;
-    border-radius:15px;
-    box-shadow:0 20px 40px rgba(0,0,0,0.2);
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(255,0,0,0.95);
+    color:white;
+    text-align:center;
+    padding-top:20%;
     z-index:999;
+    animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.05);}
+    100%{transform:scale(1);}
+}
+
+#alertBox h2{
+    font-size:42px;
+}
+
+table{
+    margin-top:20px;
+    width:100%;
+    font-size:12px;
 }
 </style>
 </head>
 
 <body>
 
-<header>Patient Turn Alert</header>
+<header>Patient Turn Alert Pro</header>
 
 <div class="card">
-<h3>ระบบแจ้งเตือนเปลี่ยนท่า</h3>
+<h3>ตั้งเวลาแจ้งเตือน</h3>
 
 <select id="timeSelect">
 <option value="30">30 วินาที</option>
@@ -82,13 +104,28 @@ button:hover{
 </select>
 
 <br>
-<button onclick="startTimer()">เริ่มระบบ</button>
+<button onclick="startMonitoring()">เริ่มระบบ</button>
+<button onclick="downloadLog()">ดาวน์โหลดประวัติ</button>
 
 <p id="timer">ยังไม่ได้เริ่ม</p>
+
+<h4>กล้องตรวจจับการเคลื่อนไหว</h4>
+<button onclick="startCamera()">เปิดกล้อง</button>
+<br>
+<video id="video" width="300" autoplay></video>
+
+<table border="1">
+<thead>
+<tr><th>วันที่</th><th>เวลา</th><th>สถานะ</th></tr>
+</thead>
+<tbody id="logTable"></tbody>
+</table>
+
 </div>
 
 <div id="alertBox">
-<h2>⚠️ ถึงเวลาเปลี่ยนท่า!</h2>
+<h2>⚠️ ไม่มีการเคลื่อนไหว!</h2>
+<br>
 <button onclick="stopAlert()">ยืนยันว่าเปลี่ยนท่าแล้ว</button>
 </div>
 
@@ -96,19 +133,27 @@ button:hover{
 let countdown;
 let timeLeft;
 let alarmSound = new Audio("https://www.soundjay.com/buttons/beep-07.wav");
+let motionDetected = true;
+let logData = [];
+let lastImageData = null;
 
-function startTimer(){
+function startMonitoring(){
     clearInterval(countdown);
     timeLeft = document.getElementById("timeSelect").value;
 
     countdown = setInterval(function(){
-        timeLeft--;
+        if(!motionDetected){
+            timeLeft--;
+        } else {
+            timeLeft = document.getElementById("timeSelect").value;
+        }
+
         document.getElementById("timer").innerHTML =
         "เวลาเหลือ: " + formatTime(timeLeft);
 
         if(timeLeft <= 0){
             clearInterval(countdown);
-            showAlert();
+            triggerAlert();
         }
     },1000);
 }
@@ -120,16 +165,73 @@ function formatTime(seconds){
     return h+"ชม "+m+"น "+s+"วิ";
 }
 
-function showAlert(){
+function triggerAlert(){
     document.getElementById("alertBox").style.display="block";
     alarmSound.loop = true;
     alarmSound.play();
+    saveLog("ไม่มีการเคลื่อนไหว");
 }
 
 function stopAlert(){
     document.getElementById("alertBox").style.display="none";
     alarmSound.pause();
     alarmSound.currentTime = 0;
+    timeLeft = document.getElementById("timeSelect").value;
+}
+
+function saveLog(status){
+    let now = new Date();
+    let date = now.toLocaleDateString();
+    let time = now.toLocaleTimeString();
+    logData.push([date,time,status]);
+
+    let row = "<tr><td>"+date+"</td><td>"+time+"</td><td>"+status+"</td></tr>";
+    document.getElementById("logTable").innerHTML += row;
+}
+
+function downloadLog(){
+    let csv = "วันที่,เวลา,สถานะ\n";
+    logData.forEach(row=>{
+        csv += row.join(",") + "\n";
+    });
+
+    let blob = new Blob([csv], { type: 'text/csv' });
+    let url = window.URL.createObjectURL(blob);
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = "patient_log.csv";
+    a.click();
+}
+
+function startCamera(){
+    navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream=>{
+        document.getElementById("video").srcObject = stream;
+        monitorMotion();
+    });
+}
+
+function monitorMotion(){
+    const video = document.getElementById("video");
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    setInterval(()=>{
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video,0,0);
+        let imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+
+        if(lastImageData){
+            let diff = 0;
+            for(let i=0;i<imageData.data.length;i+=4){
+                diff += Math.abs(imageData.data[i] - lastImageData.data[i]);
+            }
+            motionDetected = diff > 1000000;
+        }
+
+        lastImageData = imageData;
+    },2000);
 }
 </script>
 
