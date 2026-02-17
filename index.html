@@ -13,26 +13,26 @@ body{
 }
 
 header{
-    padding:25px;
-    font-size:28px;
+    padding:20px;
+    font-size:26px;
     font-weight:bold;
     color:#2b7cff;
 }
 
 .card{
     background:white;
-    width:380px;
-    margin:30px auto;
-    padding:25px;
+    width:400px;
+    margin:20px auto;
+    padding:20px;
     border-radius:18px;
     box-shadow:0 12px 25px rgba(0,0,0,0.1);
 }
 
-select, button{
+button, select{
     padding:10px;
-    border-radius:10px;
+    margin:5px;
     border:none;
-    margin-top:10px;
+    border-radius:10px;
 }
 
 button{
@@ -45,15 +45,15 @@ button:hover{
     background:#1f5edb;
 }
 
-#timer{
-    font-size:18px;
-    margin-top:15px;
-    font-weight:bold;
+video{
+    margin-top:10px;
+    border-radius:12px;
 }
 
-video{
-    margin-top:15px;
-    border-radius:12px;
+#timer{
+    font-size:18px;
+    font-weight:bold;
+    margin-top:10px;
 }
 
 #alertBox{
@@ -63,7 +63,7 @@ video{
     left:0;
     width:100%;
     height:100%;
-    background:rgba(255,0,0,0.95);
+    background:red;
     color:white;
     text-align:center;
     padding-top:20%;
@@ -78,11 +78,14 @@ video{
 }
 
 #alertBox h2{
-    font-size:42px;
+    font-size:40px;
+}
+
+.hidden{
+    display:none;
 }
 
 table{
-    margin-top:20px;
     width:100%;
     font-size:12px;
 }
@@ -93,9 +96,10 @@ table{
 
 <header>Patient Turn Alert Pro</header>
 
-<div class="card">
-<h3>ตั้งเวลาแจ้งเตือน</h3>
+<!-- หน้า ระบบ -->
+<div id="mainPage" class="card">
 
+<h3>ตั้งเวลา</h3>
 <select id="timeSelect">
 <option value="30">30 วินาที</option>
 <option value="1800">30 นาที</option>
@@ -104,79 +108,101 @@ table{
 </select>
 
 <br>
-<button onclick="startMonitoring()">เริ่มระบบ</button>
-<button onclick="downloadLog()">ดาวน์โหลดประวัติ</button>
+<button onclick="startSystem()">เริ่มระบบ</button>
+<button onclick="stopSystem()">หยุดระบบ</button>
 
 <p id="timer">ยังไม่ได้เริ่ม</p>
 
-<h4>กล้องตรวจจับการเคลื่อนไหว</h4>
+<h3>กล้อง</h3>
 <button onclick="startCamera()">เปิดกล้อง</button>
+<button onclick="stopCamera()">ปิดกล้อง</button>
 <br>
 <video id="video" width="300" autoplay></video>
 
+<br><br>
+<button onclick="showHistory()">ดูประวัติ</button>
+
+</div>
+
+<!-- หน้า ประวัติ -->
+<div id="historyPage" class="card hidden">
+
+<h3>ประวัติการแจ้งเตือน</h3>
+
 <table border="1">
 <thead>
-<tr><th>วันที่</th><th>เวลา</th><th>สถานะ</th></tr>
+<tr>
+<th>วันที่</th>
+<th>เวลา</th>
+<th>สถานะ</th>
+</tr>
 </thead>
 <tbody id="logTable"></tbody>
 </table>
 
+<br>
+<button onclick="downloadLog()">ดาวน์โหลด CSV</button>
+<button onclick="backToMain()">กลับหน้าหลัก</button>
+
 </div>
 
+<!-- แจ้งเตือน -->
 <div id="alertBox">
 <h2>⚠️ ไม่มีการเคลื่อนไหว!</h2>
 <br>
-<button onclick="stopAlert()">ยืนยันว่าเปลี่ยนท่าแล้ว</button>
+<button onclick="confirmTurn()">ยืนยันว่าเปลี่ยนท่าแล้ว</button>
 </div>
 
 <script>
-let countdown;
-let timeLeft;
-let alarmSound = new Audio("https://www.soundjay.com/buttons/beep-07.wav");
-let motionDetected = true;
+let timerInterval;
+let selectedTime = 0;
+let currentTime = 0;
+let videoStream = null;
+let alarm = new Audio("https://www.soundjay.com/buttons/beep-07.wav");
 let logData = [];
-let lastImageData = null;
+let lastImage = null;
 
-function startMonitoring(){
-    clearInterval(countdown);
-    timeLeft = document.getElementById("timeSelect").value;
+function startSystem(){
+    selectedTime = parseInt(document.getElementById("timeSelect").value);
+    currentTime = selectedTime;
 
-    countdown = setInterval(function(){
-        if(!motionDetected){
-            timeLeft--;
-        } else {
-            timeLeft = document.getElementById("timeSelect").value;
-        }
+    clearInterval(timerInterval);
+    timerInterval = setInterval(()=>{
+        currentTime--;
+        updateTimer();
 
-        document.getElementById("timer").innerHTML =
-        "เวลาเหลือ: " + formatTime(timeLeft);
-
-        if(timeLeft <= 0){
-            clearInterval(countdown);
+        if(currentTime <= 0){
             triggerAlert();
         }
     },1000);
 }
 
-function formatTime(seconds){
-    let h = Math.floor(seconds / 3600);
-    let m = Math.floor((seconds % 3600) / 60);
-    let s = seconds % 60;
-    return h+"ชม "+m+"น "+s+"วิ";
+function stopSystem(){
+    clearInterval(timerInterval);
+    document.getElementById("timer").innerHTML="ระบบหยุดแล้ว";
+}
+
+function updateTimer(){
+    let h = Math.floor(currentTime/3600);
+    let m = Math.floor((currentTime%3600)/60);
+    let s = currentTime%60;
+    document.getElementById("timer").innerHTML =
+    "เวลาเหลือ: "+h+"ชม "+m+"น "+s+"วิ";
 }
 
 function triggerAlert(){
+    clearInterval(timerInterval);
     document.getElementById("alertBox").style.display="block";
-    alarmSound.loop = true;
-    alarmSound.play();
+    alarm.loop = true;
+    alarm.play();
     saveLog("ไม่มีการเคลื่อนไหว");
 }
 
-function stopAlert(){
+function confirmTurn(){
     document.getElementById("alertBox").style.display="none";
-    alarmSound.pause();
-    alarmSound.currentTime = 0;
-    timeLeft = document.getElementById("timeSelect").value;
+    alarm.pause();
+    alarm.currentTime = 0;
+    startSystem();
 }
 
 function saveLog(status){
@@ -191,11 +217,11 @@ function saveLog(status){
 
 function downloadLog(){
     let csv = "วันที่,เวลา,สถานะ\n";
-    logData.forEach(row=>{
-        csv += row.join(",") + "\n";
+    logData.forEach(r=>{
+        csv += r.join(",")+"\n";
     });
 
-    let blob = new Blob([csv], { type: 'text/csv' });
+    let blob = new Blob([csv], {type:"text/csv"});
     let url = window.URL.createObjectURL(blob);
     let a = document.createElement("a");
     a.href = url;
@@ -203,12 +229,30 @@ function downloadLog(){
     a.click();
 }
 
+function showHistory(){
+    document.getElementById("mainPage").classList.add("hidden");
+    document.getElementById("historyPage").classList.remove("hidden");
+}
+
+function backToMain(){
+    document.getElementById("historyPage").classList.add("hidden");
+    document.getElementById("mainPage").classList.remove("hidden");
+}
+
 function startCamera(){
-    navigator.mediaDevices.getUserMedia({ video: true })
+    navigator.mediaDevices.getUserMedia({video:true})
     .then(stream=>{
+        videoStream = stream;
         document.getElementById("video").srcObject = stream;
         monitorMotion();
     });
+}
+
+function stopCamera(){
+    if(videoStream){
+        videoStream.getTracks().forEach(track=>track.stop());
+        document.getElementById("video").srcObject = null;
+    }
 }
 
 function monitorMotion(){
@@ -217,20 +261,27 @@ function monitorMotion(){
     const ctx = canvas.getContext("2d");
 
     setInterval(()=>{
+        if(!videoStream) return;
+
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.drawImage(video,0,0);
-        let imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
 
-        if(lastImageData){
+        let image = ctx.getImageData(0,0,canvas.width,canvas.height);
+
+        if(lastImage){
             let diff = 0;
-            for(let i=0;i<imageData.data.length;i+=4){
-                diff += Math.abs(imageData.data[i] - lastImageData.data[i]);
+            for(let i=0;i<image.data.length;i+=4){
+                diff += Math.abs(image.data[i] - lastImage.data[i]);
             }
-            motionDetected = diff > 1000000;
+
+            if(diff > 800000){
+                currentTime = selectedTime; // รีเซ็ตเวลาเมื่อมีการเคลื่อนไหว
+            }
         }
 
-        lastImageData = imageData;
+        lastImage = image;
+
     },2000);
 }
 </script>
