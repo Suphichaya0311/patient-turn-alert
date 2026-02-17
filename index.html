@@ -39,6 +39,12 @@ video{
     color:#0d3b66;
 }
 
+#turnGuide img{
+    width:260px;
+    border-radius:12px;
+    margin-top:10px;
+}
+
 #alertBox{
     position:fixed;
     top:0;
@@ -115,6 +121,11 @@ video{
 
 <div id="countdown">00:00</div>
 
+<div id="turnGuide">
+    <h3>แนวทางการพลิกตัวผู้ป่วย</h3>
+    <img src="เวลาพลิกตัว.jpg">
+</div>
+
 <video id="video" autoplay></video>
 <canvas id="canvas" style="display:none;"></canvas>
 
@@ -141,7 +152,9 @@ let totalTime;
 let interval;
 let stream = null;
 let images = [];
-let alertSound = new Audio("https://www.soundjay.com/buttons/beep-07.wav");
+
+/* ใช้ไฟล์เสียงจากโฟลเดอร์ */
+let alertSound = new Audio("alert.mp3");
 
 function startTimer(){
     totalTime = parseInt(document.getElementById("timeSelect").value);
@@ -176,7 +189,6 @@ function triggerAlert(){
 
     let now = new Date();
     let timeString = now.toLocaleTimeString();
-
     saveHistory(timeString);
 
     if(stream){
