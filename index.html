@@ -75,10 +75,19 @@ video{
     z-index:999;
 }
 
+.snapshotBox{
+    display:inline-block;
+    margin:10px;
+    text-align:center;
+}
+
 .snapshot{
     width:200px;
-    margin:10px;
     border-radius:10px;
+}
+
+#history{
+    margin-top:20px;
 }
 
 </style>
@@ -112,6 +121,11 @@ video{
 <div id="alertBox">
     ⚠ กรุณาเปลี่ยนท่า ⚠
     <button onclick="closeAlert()" style="font-size:20px;margin-top:20px;">ปิดแจ้งเตือน</button>
+</div>
+
+<div id="history">
+    <h3>ประวัติการแจ้งเตือน</h3>
+    <ul id="historyList"></ul>
 </div>
 
 <div id="album">
@@ -160,8 +174,13 @@ function triggerAlert(){
     alertSound.loop = true;
     alertSound.play();
 
+    let now = new Date();
+    let timeString = now.toLocaleTimeString();
+
+    saveHistory(timeString);
+
     if(stream){
-        takeSnapshot();
+        takeSnapshot(timeString);
     }
 }
 
@@ -189,7 +208,7 @@ function stopCamera(){
     }
 }
 
-function takeSnapshot(){
+function takeSnapshot(timeString){
     let video=document.getElementById("video");
     let canvas=document.getElementById("canvas");
     let ctx=canvas.getContext("2d");
@@ -199,7 +218,17 @@ function takeSnapshot(){
     ctx.drawImage(video,0,0);
 
     let imageData = canvas.toDataURL("image/png");
-    images.push(imageData);
+
+    images.push({
+        img:imageData,
+        time:timeString
+    });
+}
+
+function saveHistory(timeString){
+    let li=document.createElement("li");
+    li.innerText="แจ้งเตือนเวลา: "+timeString;
+    document.getElementById("historyList").appendChild(li);
 }
 
 function openAlbum(){
@@ -209,11 +238,20 @@ function openAlbum(){
     if(images.length === 0){
         container.innerHTML = "<p>ยังไม่มีภาพเหตุการณ์</p>";
     }else{
-        images.forEach(img=>{
+        images.forEach(item=>{
+            let box = document.createElement("div");
+            box.className="snapshotBox";
+
             let image = document.createElement("img");
-            image.src = img;
+            image.src = item.img;
             image.className = "snapshot";
-            container.appendChild(image);
+
+            let caption = document.createElement("p");
+            caption.innerText="บันทึกเวลา: "+item.time;
+
+            box.appendChild(image);
+            box.appendChild(caption);
+            container.appendChild(box);
         });
     }
 
