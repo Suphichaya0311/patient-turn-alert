@@ -14,7 +14,7 @@ body{
   text-align:center;
 }
 
-/* ===== วงกลมลอย ===== */
+/* วงกลมลอย */
 .circle{
   position:fixed;
   bottom:-120px;
@@ -28,7 +28,7 @@ body{
   to{transform:translateY(-120vh);}
 }
 
-/* ===== Welcome ===== */
+/* Welcome */
 #welcome{
   position:fixed;
   width:100%;
@@ -50,6 +50,7 @@ body{
   margin:20px 0;
   box-shadow:0 0 20px #34d399;
 }
+
 button{
   padding:12px 25px;
   margin:10px;
@@ -62,12 +63,11 @@ button{
 }
 button:hover{opacity:0.85}
 
-/* ===== Main System ===== */
 .container{
   display:none;
   position:relative;
   margin:100px auto;
-  width:85%;
+  width:90%;
   padding:30px;
   background:white;
   border-radius:25px;
@@ -81,7 +81,7 @@ button:hover{opacity:0.85}
   color:#065f46;
 }
 
-/* ===== Alert ===== */
+/* Alert */
 .alert{
   display:none;
   position:fixed;
@@ -116,9 +116,15 @@ button:hover{opacity:0.85}
 }
 
 .album img{
-  width:100px;
+  width:120px;
   margin:5px;
   border-radius:10px;
+}
+
+video{
+  width:250px;
+  border-radius:15px;
+  margin-top:10px;
 }
 </style>
 </head>
@@ -128,7 +134,6 @@ button:hover{opacity:0.85}
 <!-- Welcome -->
 <div id="welcome">
   <h1>Turning Care System</h1>
-  <!-- ใช้รูปท่าพลิกตัวแทนหน้าแรกก่อน -->
   <img src="เวลาพลิกตัว.jpg">
   <button onclick="enterSystem()">เข้าสู่ระบบ</button>
 </div>
@@ -157,8 +162,11 @@ button:hover{opacity:0.85}
 
   <div id="countdown">00:00</div>
 
-  <h3>ภาพท่าพลิกตัว</h3>
-  <img src="เวลาพลิกตัว.jpg" width="250">
+  <h3>กล้อง</h3>
+  <video id="camera" autoplay></video>
+  <br>
+  <button onclick="startCamera()">เปิดกล้อง</button>
+  <button onclick="stopCamera()">ปิดกล้อง</button>
 
   <div class="history">
     <h3>ประวัติการแจ้งเตือน</h3>
@@ -166,7 +174,7 @@ button:hover{opacity:0.85}
   </div>
 
   <div class="album">
-    <h3>อัลบั้มรูป</h3>
+    <h3>อัลบั้มรูปจากกล้อง</h3>
     <div id="albumList"></div>
   </div>
 </div>
@@ -176,12 +184,14 @@ button:hover{opacity:0.85}
 <script>
 let timer;
 let timeLeft=0;
+let stream=null;
 
 function enterSystem(){
   document.getElementById("welcome").style.display="none";
   document.getElementById("mainSystem").style.display="block";
 }
 
+/* Timer */
 function startTimer(){
   clearInterval(timer);
   timeLeft=parseInt(document.getElementById("timeSelect").value);
@@ -210,11 +220,12 @@ function updateDisplay(){
     String(sec).padStart(2,'0');
 }
 
+/* Alert */
 function triggerAlert(){
   document.getElementById("alertBox").style.display="flex";
   document.getElementById("alarmSound").play();
   saveHistory();
-  saveImage();
+  capturePhoto();
 }
 
 function stopAlert(){
@@ -224,6 +235,7 @@ function stopAlert(){
   sound.currentTime=0;
 }
 
+/* History */
 function saveHistory(){
   let now=new Date();
   let timeString=now.toLocaleString();
@@ -232,13 +244,36 @@ function saveHistory(){
   document.getElementById("historyList").appendChild(li);
 }
 
-function saveImage(){
+/* Camera */
+async function startCamera(){
+  stream=await navigator.mediaDevices.getUserMedia({video:true});
+  document.getElementById("camera").srcObject=stream;
+}
+
+function stopCamera(){
+  if(stream){
+    stream.getTracks().forEach(track=>track.stop());
+  }
+}
+
+/* Capture Photo */
+function capturePhoto(){
+  let video=document.getElementById("camera");
+  if(!stream) return;
+
+  let canvas=document.createElement("canvas");
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
+  let ctx=canvas.getContext("2d");
+  ctx.drawImage(video,0,0);
+
   let img=document.createElement("img");
-  img.src="เวลาพลิกตัว.jpg";
+  img.src=canvas.toDataURL("image/png");
+
   document.getElementById("albumList").appendChild(img);
 }
 
-/* สร้างวงกลมลอย */
+/* Floating circles */
 for(let i=0;i<25;i++){
   let circle=document.createElement("div");
   circle.className="circle";
