@@ -2,62 +2,43 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Patient Turn Alert Pro</title>
-
+<title>Patient Turn Alert</title>
 <style>
 body{
-    margin:0;
-    font-family:'Segoe UI',sans-serif;
-    background:linear-gradient(to right,#eaf4ff,#ffffff);
+    font-family: Arial;
     text-align:center;
+    background:#f4f8fb;
 }
-
-header{
-    padding:20px;
-    font-size:26px;
-    font-weight:bold;
-    color:#2b7cff;
-}
-
-.card{
-    background:white;
-    width:400px;
-    margin:20px auto;
-    padding:20px;
-    border-radius:18px;
-    box-shadow:0 12px 25px rgba(0,0,0,0.1);
-}
+h1{color:#0d3b66;}
 
 button, select{
-    padding:10px;
+    padding:10px 20px;
     margin:5px;
+    font-size:16px;
     border:none;
-    border-radius:10px;
-}
-
-button{
-    background:#2b7cff;
-    color:white;
+    border-radius:8px;
     cursor:pointer;
 }
 
-button:hover{
-    background:#1f5edb;
-}
+.start{background:#2a9d8f;color:white;}
+.stop{background:#e63946;color:white;}
+.camera{background:#457b9d;color:white;}
+.download{background:#6a4c93;color:white;}
 
 video{
     margin-top:10px;
-    border-radius:12px;
+    border-radius:10px;
+    width:320px;
 }
 
-#timer{
-    font-size:18px;
+#countdown{
+    font-size:40px;
+    margin:15px;
     font-weight:bold;
-    margin-top:10px;
+    color:#0d3b66;
 }
 
 #alertBox{
-    display:none;
     position:fixed;
     top:0;
     left:0;
@@ -65,224 +46,179 @@ video{
     height:100%;
     background:red;
     color:white;
-    text-align:center;
-    padding-top:20%;
-    z-index:999;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    font-size:50px;
     animation:pulse 1s infinite;
 }
 
 @keyframes pulse{
     0%{transform:scale(1);}
-    50%{transform:scale(1.05);}
+    50%{transform:scale(1.1);}
     100%{transform:scale(1);}
 }
 
-#alertBox h2{
-    font-size:40px;
-}
-
-.hidden{
-    display:none;
-}
-
-table{
-    width:100%;
-    font-size:12px;
+#history{
+    margin-top:20px;
+    text-align:left;
+    width:80%;
+    margin-left:auto;
+    margin-right:auto;
 }
 </style>
 </head>
 
 <body>
 
-<header>Patient Turn Alert Pro</header>
+<h1>Patient Turn Alert</h1>
 
-<!-- หน้า ระบบ -->
-<div id="mainPage" class="card">
-
-<h3>ตั้งเวลา</h3>
 <select id="timeSelect">
-<option value="30">30 วินาที</option>
-<option value="1800">30 นาที</option>
-<option value="3600">1 ชั่วโมง</option>
-<option value="7200">2 ชั่วโมง</option>
+    <option value="30">30 วินาที</option>
+    <option value="1800">30 นาที</option>
+    <option value="3600">1 ชั่วโมง</option>
+    <option value="7200">2 ชั่วโมง</option>
 </select>
 
 <br>
-<button onclick="startSystem()">เริ่มระบบ</button>
-<button onclick="stopSystem()">หยุดระบบ</button>
 
-<p id="timer">ยังไม่ได้เริ่ม</p>
-
-<h3>กล้อง</h3>
-<button onclick="startCamera()">เปิดกล้อง</button>
-<button onclick="stopCamera()">ปิดกล้อง</button>
+<button class="start" onclick="startTimer()">เริ่มจับเวลา</button>
+<button class="stop" onclick="stopTimer()">หยุด</button>
 <br>
-<video id="video" width="300" autoplay></video>
+<button class="camera" onclick="startCamera()">เปิดกล้อง</button>
+<button class="stop" onclick="stopCamera()">ปิดกล้อง</button>
+<button class="download" onclick="downloadHistory()">ดาวน์โหลดประวัติ</button>
 
-<br><br>
-<button onclick="showHistory()">ดูประวัติ</button>
+<div id="countdown">00:00</div>
 
-</div>
+<video id="video" autoplay></video>
+<canvas id="canvas" style="display:none;"></canvas>
 
-<!-- หน้า ประวัติ -->
-<div id="historyPage" class="card hidden">
-
-<h3>ประวัติการแจ้งเตือน</h3>
-
-<table border="1">
-<thead>
-<tr>
-<th>วันที่</th>
-<th>เวลา</th>
-<th>สถานะ</th>
-</tr>
-</thead>
-<tbody id="logTable"></tbody>
-</table>
-
-<br>
-<button onclick="downloadLog()">ดาวน์โหลด CSV</button>
-<button onclick="backToMain()">กลับหน้าหลัก</button>
-
-</div>
-
-<!-- แจ้งเตือน -->
 <div id="alertBox">
-<h2>⚠️ ไม่มีการเคลื่อนไหว!</h2>
-<br>
-<button onclick="confirmTurn()">ยืนยันว่าเปลี่ยนท่าแล้ว</button>
+    ⚠ กรุณาเปลี่ยนท่า ⚠
+    <button onclick="closeAlert()" style="font-size:20px;margin-top:20px;">ปิดแจ้งเตือน</button>
+</div>
+
+<div id="history">
+    <h3>ประวัติการแจ้งเตือน</h3>
+    <ul id="historyList"></ul>
 </div>
 
 <script>
-let timerInterval;
-let selectedTime = 0;
-let currentTime = 0;
-let videoStream = null;
-let alarm = new Audio("https://www.soundjay.com/buttons/beep-07.wav");
-let logData = [];
-let lastImage = null;
+let countdown;
+let totalTime;
+let interval;
+let stream;
+let lastFrame = null;
+let motionInterval;
+let alertSound = new Audio("https://www.soundjay.com/buttons/beep-07.wav");
 
-function startSystem(){
-    selectedTime = parseInt(document.getElementById("timeSelect").value);
-    currentTime = selectedTime;
-
-    clearInterval(timerInterval);
-    timerInterval = setInterval(()=>{
-        currentTime--;
-        updateTimer();
-
-        if(currentTime <= 0){
+function startTimer(){
+    totalTime = parseInt(document.getElementById("timeSelect").value);
+    countdown = totalTime;
+    updateDisplay();
+    interval = setInterval(()=>{
+        countdown--;
+        updateDisplay();
+        if(countdown <= 0){
             triggerAlert();
         }
     },1000);
 }
 
-function stopSystem(){
-    clearInterval(timerInterval);
-    document.getElementById("timer").innerHTML="ระบบหยุดแล้ว";
+function stopTimer(){
+    clearInterval(interval);
 }
 
-function updateTimer(){
-    let h = Math.floor(currentTime/3600);
-    let m = Math.floor((currentTime%3600)/60);
-    let s = currentTime%60;
-    document.getElementById("timer").innerHTML =
-    "เวลาเหลือ: "+h+"ชม "+m+"น "+s+"วิ";
+function updateDisplay(){
+    let minutes = Math.floor(countdown/60);
+    let seconds = countdown%60;
+    document.getElementById("countdown").innerText =
+        String(minutes).padStart(2,'0') + ":" +
+        String(seconds).padStart(2,'0');
 }
 
 function triggerAlert(){
-    clearInterval(timerInterval);
-    document.getElementById("alertBox").style.display="block";
-    alarm.loop = true;
-    alarm.play();
-    saveLog("ไม่มีการเคลื่อนไหว");
+    clearInterval(interval);
+    document.getElementById("alertBox").style.display="flex";
+    alertSound.loop = true;
+    alertSound.play();
+    takeSnapshot();
+    saveHistory();
 }
 
-function confirmTurn(){
+function closeAlert(){
     document.getElementById("alertBox").style.display="none";
-    alarm.pause();
-    alarm.currentTime = 0;
-    startSystem();
-}
-
-function saveLog(status){
-    let now = new Date();
-    let date = now.toLocaleDateString();
-    let time = now.toLocaleTimeString();
-    logData.push([date,time,status]);
-
-    let row = "<tr><td>"+date+"</td><td>"+time+"</td><td>"+status+"</td></tr>";
-    document.getElementById("logTable").innerHTML += row;
-}
-
-function downloadLog(){
-    let csv = "วันที่,เวลา,สถานะ\n";
-    logData.forEach(r=>{
-        csv += r.join(",")+"\n";
-    });
-
-    let blob = new Blob([csv], {type:"text/csv"});
-    let url = window.URL.createObjectURL(blob);
-    let a = document.createElement("a");
-    a.href = url;
-    a.download = "patient_log.csv";
-    a.click();
-}
-
-function showHistory(){
-    document.getElementById("mainPage").classList.add("hidden");
-    document.getElementById("historyPage").classList.remove("hidden");
-}
-
-function backToMain(){
-    document.getElementById("historyPage").classList.add("hidden");
-    document.getElementById("mainPage").classList.remove("hidden");
+    alertSound.pause();
+    alertSound.currentTime=0;
 }
 
 function startCamera(){
     navigator.mediaDevices.getUserMedia({video:true})
-    .then(stream=>{
-        videoStream = stream;
-        document.getElementById("video").srcObject = stream;
-        monitorMotion();
+    .then(s=>{
+        stream=s;
+        document.getElementById("video").srcObject=s;
+        detectMotion();
     });
 }
 
 function stopCamera(){
-    if(videoStream){
-        videoStream.getTracks().forEach(track=>track.stop());
-        document.getElementById("video").srcObject = null;
+    if(stream){
+        stream.getTracks().forEach(track=>track.stop());
     }
+    clearInterval(motionInterval);
 }
 
-function monitorMotion(){
-    const video = document.getElementById("video");
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+function detectMotion(){
+    motionInterval = setInterval(()=>{
+        let video=document.getElementById("video");
+        let canvas=document.getElementById("canvas");
+        let ctx=canvas.getContext("2d");
 
-    setInterval(()=>{
-        if(!videoStream) return;
-
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        canvas.width=video.videoWidth;
+        canvas.height=video.videoHeight;
         ctx.drawImage(video,0,0);
 
-        let image = ctx.getImageData(0,0,canvas.width,canvas.height);
+        let frame=ctx.getImageData(0,0,canvas.width,canvas.height);
 
-        if(lastImage){
-            let diff = 0;
-            for(let i=0;i<image.data.length;i+=4){
-                diff += Math.abs(image.data[i] - lastImage.data[i]);
+        if(lastFrame){
+            let diff=0;
+            for(let i=0;i<frame.data.length;i+=4){
+                diff+=Math.abs(frame.data[i]-lastFrame.data[i]);
             }
-
-            if(diff > 800000){
-                currentTime = selectedTime; // รีเซ็ตเวลาเมื่อมีการเคลื่อนไหว
+            if(diff<5000000){
+                triggerAlert();
             }
         }
+        lastFrame=frame;
+    },5000);
+}
 
-        lastImage = image;
+function takeSnapshot(){
+    let video=document.getElementById("video");
+    let canvas=document.getElementById("canvas");
+    let ctx=canvas.getContext("2d");
+    ctx.drawImage(video,0,0);
+}
 
-    },2000);
+function saveHistory(){
+    let time=new Date().toLocaleString();
+    let li=document.createElement("li");
+    li.innerText="แจ้งเตือนเมื่อ: "+time;
+    document.getElementById("historyList").appendChild(li);
+}
+
+function downloadHistory(){
+    let items=document.querySelectorAll("#historyList li");
+    let text="";
+    items.forEach(i=>text+=i.innerText+"\n");
+
+    let blob=new Blob([text],{type:"text/plain"});
+    let a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="history.txt";
+    a.click();
 }
 </script>
 
