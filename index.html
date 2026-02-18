@@ -8,319 +8,230 @@
 <style>
 body{
   margin:0;
-  font-family:Arial, sans-serif;
-  background:linear-gradient(135deg,#d4f8e8,#b7f7d4,#9df0c0);
+  font-family:'Segoe UI',sans-serif;
+  background:#e6fff4;
   overflow-x:hidden;
-  text-align:center;
 }
 
-/* ===== วงกลมลอย ===== */
+/* วงกลมลอย */
 .circle{
   position:fixed;
-  bottom:-120px;
   border-radius:50%;
-  background:rgba(255,255,255,0.35);
-  animation:floatUp linear infinite;
-  z-index:0;
+  background:rgba(16,185,129,0.2);
+  animation:float 8s infinite ease-in-out;
+  z-index:-1;
 }
-@keyframes floatUp{
-  from{transform:translateY(0);}
-  to{transform:translateY(-120vh);}
+.circle:nth-child(1){width:200px;height:200px;top:10%;left:5%;}
+.circle:nth-child(2){width:150px;height:150px;bottom:15%;right:10%;animation-delay:2s;}
+.circle:nth-child(3){width:250px;height:250px;top:50%;left:70%;animation-delay:4s;}
+
+@keyframes float{
+  0%{transform:translateY(0);}
+  50%{transform:translateY(-30px);}
+  100%{transform:translateY(0);}
 }
 
-/* ===== Welcome ===== */
+/* เส้นชีพจร */
+.heartbeat-line{
+  position:fixed;
+  bottom:0;
+  width:200%;
+  height:80px;
+  background:url('https://svgshare.com/i/14Yp.svg') repeat-x;
+  background-size:contain;
+  animation:moveLine 8s linear infinite;
+  opacity:0.6;
+}
+@keyframes moveLine{
+  0%{transform:translateX(0);}
+  100%{transform:translateX(-50%);}
+}
+
+/* Welcome */
 #welcome{
   position:fixed;
   width:100%;
   height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:linear-gradient(135deg,#b2f7d8,#8ef0c3);
+  overflow:hidden;
   z-index:10;
 }
 
-.welcome-box{
-  background:rgba(255,255,255,0.95);
-  padding:40px;
+video{
+  position:absolute;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  filter:blur(6px) brightness(60%);
+}
+
+.overlay{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  text-align:center;
+  color:white;
+  padding:60px;
   border-radius:30px;
-  box-shadow:0 0 40px #10b981;
-  width:90%;
-  max-width:500px;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(15px);
+  box-shadow:0 0 40px rgba(16,185,129,0.8);
+  animation:fadeIn 2s ease forwards;
+  opacity:0;
 }
-
-.welcome-box h1{
-  font-size:38px;
-  color:#065f46;
+@keyframes fadeIn{
+  from{opacity:0; transform:translate(-50%,-40%);}
+  to{opacity:1; transform:translate(-50%,-50%);}
 }
-
-.welcome-box p{
-  color:#047857;
-}
-
-.welcome-box img{
-  width:220px;
-  border-radius:20px;
-  margin:20px 0;
-  box-shadow:0 0 20px #34d399;
-}
-
-button{
-  padding:12px 25px;
+.overlay h1{font-size:50px;}
+.overlay p{font-size:20px;margin-bottom:20px;}
+.overlay button{
+  padding:12px 30px;
   margin:10px;
   border:none;
-  border-radius:25px;
+  border-radius:30px;
   background:#10b981;
   color:white;
   font-size:16px;
   cursor:pointer;
 }
-button:hover{opacity:0.85}
 
-/* ===== Main ===== */
-.container{
+/* ระบบหลัก */
+#main{
   display:none;
-  position:relative;
-  margin:100px auto;
-  width:90%;
   padding:30px;
-  background:white;
-  border-radius:25px;
-  box-shadow:0 0 30px #10b981;
-  z-index:2;
-}
-
-#countdown{
-  font-size:55px;
-  margin:20px 0;
-  color:#065f46;
-}
-
-/* ===== Alert ===== */
-.alert{
-  display:none;
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:red;
-  color:white;
-  font-size:45px;
-  font-weight:bold;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  z-index:20;
-  animation:blink 1s infinite;
-}
-@keyframes blink{
-  0%{background:red;}
-  50%{background:#8b0000;}
-  100%{background:red;}
-}
-
-.history, .album{
-  margin-top:20px;
-  padding:15px;
-  background:#eafff6;
-  border-radius:15px;
-  max-height:250px;
-  overflow:auto;
-  text-align:left;
-}
-
-.photo-box{
-  display:inline-block;
-  margin:10px;
   text-align:center;
 }
 
-.photo-box img{
-  width:140px;
-  border-radius:12px;
+.card{
+  background:white;
+  padding:30px;
+  border-radius:20px;
+  box-shadow:0 0 20px #34d399;
+  max-width:600px;
+  margin:auto;
 }
 
-.photo-time{
-  font-size:12px;
-  margin-top:5px;
-  color:#065f46;
+button{
+  padding:10px 20px;
+  border:none;
+  border-radius:20px;
+  background:#10b981;
+  color:white;
+  cursor:pointer;
+  margin:5px;
 }
 
-video{
-  width:250px;
+#album img{
+  width:150px;
+  margin:10px;
   border-radius:15px;
-  margin-top:10px;
+  box-shadow:0 0 10px #34d399;
 }
 </style>
 </head>
 
 <body>
 
+<!-- วงกลม -->
+<div class="circle"></div>
+<div class="circle"></div>
+<div class="circle"></div>
+
+<!-- เส้นชีพจร -->
+<div class="heartbeat-line"></div>
+
 <!-- Welcome -->
 <div id="welcome">
-  <div class="welcome-box">
+  <video id="introVideo" autoplay muted loop playsinline>
+    <source src="เต้น.mp4" type="video/mp4">
+  </video>
+
+  <div class="overlay">
     <h1>Turning Care System</h1>
     <p>ระบบแจ้งเตือนการพลิกตัวผู้ป่วยอัตโนมัติ</p>
-    <img src="เวลาพลิกตัว.jpg">
-    <br>
+    <button onclick="toggleSound()">🔊 เปิดเสียง</button>
     <button onclick="enterSystem()">เข้าสู่ระบบ</button>
   </div>
 </div>
 
-<!-- Alert -->
-<div class="alert" id="alertBox">
-  ⛔ ถึงเวลาพลิกตัวผู้ป่วย ⛔
-  <br><br>
-  <button onclick="stopAlert()">ปิดแจ้งเตือน</button>
-</div>
+<!-- ระบบหลัก -->
+<div id="main">
+  <div class="card">
+    <h2>ตั้งเวลาแจ้งเตือน (วินาที)</h2>
+    <input type="number" id="seconds" placeholder="เช่น 10">
+    <button onclick="startTimer()">เริ่ม</button>
+    <h3 id="countdown"></h3>
 
-<!-- Main -->
-<div class="container" id="mainSystem">
-  <h2>ระบบแจ้งเตือนพลิกตัวผู้ป่วย</h2>
+    <video id="camera" autoplay style="width:100%;margin-top:20px;border-radius:20px;"></video>
 
-  <select id="timeSelect">
-    <option value="30">30 วินาที</option>
-    <option value="1800">30 นาที</option>
-    <option value="3600">1 ชั่วโมง</option>
-    <option value="7200">2 ชั่วโมง</option>
-  </select>
-  <br>
+    <h3>อัลบั้มรูป</h3>
+    <div id="album"></div>
 
-  <button onclick="startTimer()">เริ่ม</button>
-  <button onclick="resetTimer()">รีเซ็ต</button>
-
-  <div id="countdown">00:00</div>
-
-  <h3>กล้อง</h3>
-  <video id="camera" autoplay></video>
-  <br>
-  <button onclick="startCamera()">เปิดกล้อง</button>
-  <button onclick="stopCamera()">ปิดกล้อง</button>
-
-  <div class="history">
-    <h3>ประวัติการแจ้งเตือน</h3>
-    <ul id="historyList"></ul>
-  </div>
-
-  <div class="album">
-    <h3>อัลบั้มรูปจากกล้อง</h3>
-    <div id="albumList"></div>
+    <button onclick="goHome()">กลับหน้าแรก</button>
   </div>
 </div>
-
-<audio id="alarmSound" src="alarm.mp3" loop></audio>
 
 <script>
 let timer;
-let timeLeft=0;
-let stream=null;
+let stream;
+
+function toggleSound(){
+  const video = document.getElementById("introVideo");
+  video.muted=false;
+  video.play();
+}
 
 function enterSystem(){
   document.getElementById("welcome").style.display="none";
-  document.getElementById("mainSystem").style.display="block";
+  document.getElementById("main").style.display="block";
+  startCamera();
+}
+
+function goHome(){
+  document.getElementById("main").style.display="none";
+  document.getElementById("welcome").style.display="block";
+}
+
+function startCamera(){
+  navigator.mediaDevices.getUserMedia({video:true})
+  .then(s=>{
+    stream=s;
+    document.getElementById("camera").srcObject=s;
+  });
 }
 
 function startTimer(){
-  clearInterval(timer);
-  timeLeft=parseInt(document.getElementById("timeSelect").value);
-  updateDisplay();
+  let sec=document.getElementById("seconds").value;
+  let count=sec;
   timer=setInterval(()=>{
-    timeLeft--;
-    updateDisplay();
-    if(timeLeft<=0){
+    document.getElementById("countdown").innerText="เหลือ "+count+" วินาที";
+    count--;
+    if(count<0){
       clearInterval(timer);
-      triggerAlert();
+      alert("ถึงเวลาพลิกตัวผู้ป่วย");
+      capturePhoto();
     }
   },1000);
 }
 
-function resetTimer(){
-  clearInterval(timer);
-  timeLeft=0;
-  updateDisplay();
-}
-
-function updateDisplay(){
-  let min=Math.floor(timeLeft/60);
-  let sec=timeLeft%60;
-  document.getElementById("countdown").innerText=
-    String(min).padStart(2,'0')+":"+
-    String(sec).padStart(2,'0');
-}
-
-function triggerAlert(){
-  document.getElementById("alertBox").style.display="flex";
-  document.getElementById("alarmSound").play();
-  saveHistory();
-  capturePhoto();
-}
-
-function stopAlert(){
-  document.getElementById("alertBox").style.display="none";
-  let sound=document.getElementById("alarmSound");
-  sound.pause();
-  sound.currentTime=0;
-}
-
-function saveHistory(){
-  let now=new Date();
-  let timeString=now.toLocaleString();
-  let li=document.createElement("li");
-  li.textContent="แจ้งเตือนเมื่อ: "+timeString;
-  document.getElementById("historyList").appendChild(li);
-}
-
-async function startCamera(){
-  stream=await navigator.mediaDevices.getUserMedia({video:true});
-  document.getElementById("camera").srcObject=stream;
-}
-
-function stopCamera(){
-  if(stream){
-    stream.getTracks().forEach(track=>track.stop());
-  }
-}
-
 function capturePhoto(){
-  if(!stream) return;
-
-  let video=document.getElementById("camera");
-  let canvas=document.createElement("canvas");
+  const video=document.getElementById("camera");
+  const canvas=document.createElement("canvas");
   canvas.width=video.videoWidth;
   canvas.height=video.videoHeight;
-  let ctx=canvas.getContext("2d");
+  const ctx=canvas.getContext("2d");
   ctx.drawImage(video,0,0);
-
-  let now=new Date();
-  let timeString=now.toLocaleString();
-
-  let box=document.createElement("div");
-  box.className="photo-box";
-
-  let img=document.createElement("img");
+  const img=document.createElement("img");
   img.src=canvas.toDataURL("image/png");
 
-  let time=document.createElement("div");
-  time.className="photo-time";
-  time.textContent="บันทึกเมื่อ: "+timeString;
+  const time=document.createElement("p");
+  const now=new Date();
+  time.innerText="บันทึกเวลา: "+now.toLocaleTimeString();
 
-  box.appendChild(img);
-  box.appendChild(time);
-
-  document.getElementById("albumList").appendChild(box);
-}
-
-/* วงกลมลอย */
-for(let i=0;i<25;i++){
-  let circle=document.createElement("div");
-  circle.className="circle";
-  let size=Math.random()*100+30;
-  circle.style.width=size+"px";
-  circle.style.height=size+"px";
-  circle.style.left=Math.random()*100+"%";
-  circle.style.animationDuration=(Math.random()*15+10)+"s";
-  document.body.appendChild(circle);
+  const album=document.getElementById("album");
+  album.appendChild(img);
+  album.appendChild(time);
 }
 </script>
 
