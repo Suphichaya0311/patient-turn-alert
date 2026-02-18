@@ -13,7 +13,7 @@ body{
   overflow-x:hidden;
 }
 
-/* ===== วงกลมลอย ===== */
+/* วงกลมลอย */
 .circle{
   position:fixed;
   border-radius:50%;
@@ -31,7 +31,7 @@ body{
   100%{transform:translateY(0);}
 }
 
-/* ===== เส้นชีพจร ===== */
+/* เส้นชีพจร */
 .heartbeat-line{
   position:fixed;
   bottom:0;
@@ -47,7 +47,7 @@ body{
   100%{transform:translateX(-50%);}
 }
 
-/* ===== หน้า Welcome ===== */
+/* Welcome */
 #welcome{
   position:fixed;
   width:100%;
@@ -55,7 +55,6 @@ body{
   overflow:hidden;
   z-index:10;
 }
-
 #welcome video{
   position:absolute;
   width:100%;
@@ -63,7 +62,6 @@ body{
   object-fit:cover;
   filter:blur(6px) brightness(60%);
 }
-
 .overlay{
   position:absolute;
   top:50%;
@@ -78,62 +76,60 @@ body{
   box-shadow:0 0 40px rgba(16,185,129,0.8);
 }
 
-.overlay h1{font-size:50px;}
-.overlay p{font-size:20px;margin-bottom:20px;}
-
-button{
-  padding:12px 30px;
-  margin:10px;
-  border:none;
-  border-radius:30px;
-  background:#10b981;
-  color:white;
-  cursor:pointer;
-  font-size:16px;
-  box-shadow:0 0 15px #34d399;
-}
-
-button:hover{transform:scale(1.05);}
-
-/* ===== หน้าแอปหลัก ===== */
+/* Main */
 #main{
   display:none;
-  padding:80px 20px;
-  text-align:center;
-  background:#e6fff4;
+  padding:40px;
   min-height:100vh;
 }
 
 .card{
   background:white;
-  padding:40px;
+  padding:30px;
   border-radius:25px;
   box-shadow:0 0 30px #34d399;
-  max-width:700px;
+  max-width:900px;
   margin:auto;
+  text-align:center;
 }
 
 input{
-  padding:10px;
-  border-radius:10px;
+  width:70px;
+  padding:8px;
+  margin:5px;
+  border-radius:8px;
   border:1px solid #10b981;
+  text-align:center;
+}
+
+button{
+  padding:10px 20px;
+  margin:8px;
+  border:none;
+  border-radius:20px;
+  background:#10b981;
+  color:white;
+  cursor:pointer;
 }
 
 #camera{
   width:100%;
   margin-top:20px;
-  border-radius:20px;
-  box-shadow:0 0 20px #34d399;
+  border-radius:15px;
 }
 
 #album img{
-  width:150px;
+  width:120px;
   margin:10px;
-  border-radius:15px;
-  box-shadow:0 0 10px #34d399;
+  border-radius:10px;
 }
 
-/* ===== แจ้งเตือน ===== */
+#history{
+  margin-top:20px;
+  text-align:left;
+}
+
+/* แจ้งเตือนแดงเต็มจอ */
 #alertBox{
   display:none;
   position:fixed;
@@ -141,18 +137,14 @@ input{
   left:0;
   width:100%;
   height:100%;
-  background:rgba(0,0,0,0.7);
+  background:red;
+  color:white;
   justify-content:center;
   align-items:center;
-  z-index:20;
-}
-
-.alertContent{
-  background:white;
-  padding:40px;
-  border-radius:20px;
-  text-align:center;
-  box-shadow:0 0 30px red;
+  flex-direction:column;
+  font-size:40px;
+  font-weight:bold;
+  z-index:50;
 }
 </style>
 </head>
@@ -164,47 +156,58 @@ input{
 <div class="circle"></div>
 <div class="heartbeat-line"></div>
 
-<!-- ===== หน้าแรก ===== -->
+<!-- หน้าแรก -->
 <div id="welcome">
   <video id="bgVideo" autoplay muted loop playsinline>
     <source src="เต้น.mp4" type="video/mp4">
   </video>
-
   <div class="overlay">
     <h1>Turning Care System</h1>
-    <p>ระบบแจ้งเตือนการพลิกตัวผู้ป่วยอัตโนมัติ</p>
     <button onclick="toggleSound()">🔊 เปิดเสียง</button>
     <button onclick="enterSystem()">เข้าสู่ระบบ</button>
   </div>
 </div>
 
-<!-- ===== หน้าแอป ===== -->
+<!-- หน้าแอป -->
 <div id="main">
   <div class="card">
-    <h2>ตั้งเวลาแจ้งเตือน (วินาที)</h2>
-    <input type="number" id="seconds" placeholder="เช่น 10">
-    <button onclick="startTimer()">เริ่ม</button>
-    <h3 id="countdown"></h3>
+
+    <h2>ตั้งเวลาแจ้งเตือน</h2>
+    <input type="number" id="hours" placeholder="ชม">
+    :
+    <input type="number" id="minutes" placeholder="นาที">
+    :
+    <input type="number" id="seconds" placeholder="วิ">
 
     <br>
+    <button onclick="startTimer()">เริ่ม</button>
+    <button onclick="stopTimer()">หยุด</button>
+
+    <h3 id="countdown"></h3>
+
     <button onclick="startCamera()">เปิดกล้อง</button>
     <button onclick="stopCamera()">ปิดกล้อง</button>
 
     <video id="camera" autoplay></video>
 
+    <h3>ภาพคำแนะนำการพลิกตัว</h3>
+    <img src="เวลาพลิกตัว.jpg" width="250">
+
     <h3>อัลบั้มรูป</h3>
     <div id="album"></div>
 
+    <h3>ประวัติการแจ้งเตือน</h3>
+    <div id="history"></div>
+
     <button onclick="goHome()">กลับหน้าแรก</button>
+
   </div>
 </div>
 
-<!-- ===== กล่องแจ้งเตือน ===== -->
+<!-- แจ้งเตือนแดง -->
 <div id="alertBox">
-  <div class="alertContent">
-    <h2>ถึงเวลาพลิกตัวผู้ป่วย!</h2>
-    <button onclick="closeAlert()">ปิด</button>
-  </div>
+  ถึงเวลาพลิกตัวผู้ป่วย!
+  <button onclick="closeAlert()">ปิด</button>
 </div>
 
 <script>
@@ -244,22 +247,38 @@ function stopCamera(){
 }
 
 function startTimer(){
-  let sec=document.getElementById("seconds").value;
-  let count=sec;
+  let h=parseInt(document.getElementById("hours").value)||0;
+  let m=parseInt(document.getElementById("minutes").value)||0;
+  let s=parseInt(document.getElementById("seconds").value)||0;
+
+  let total=h*3600+m*60+s;
+
   timer=setInterval(()=>{
-    document.getElementById("countdown").innerText="เหลือ "+count+" วินาที";
-    count--;
-    if(count<0){
+    let displayH=Math.floor(total/3600);
+    let displayM=Math.floor((total%3600)/60);
+    let displayS=total%60;
+
+    document.getElementById("countdown").innerText=
+      displayH+"ชม "+displayM+"นาที "+displayS+"วิ";
+
+    total--;
+
+    if(total<0){
       clearInterval(timer);
       showAlert();
       capturePhoto();
+      saveHistory();
     }
   },1000);
 }
 
+function stopTimer(){
+  clearInterval(timer);
+}
+
 function showAlert(){
   document.getElementById("alertBox").style.display="flex";
-  let audio=new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
+  let audio=new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
   audio.play();
 }
 
@@ -280,11 +299,14 @@ function capturePhoto(){
   const img=document.createElement("img");
   img.src=canvas.toDataURL("image/png");
 
-  const time=document.createElement("p");
-  time.innerText="บันทึกเวลา: "+new Date().toLocaleTimeString();
-
   document.getElementById("album").appendChild(img);
-  document.getElementById("album").appendChild(time);
+}
+
+function saveHistory(){
+  const now=new Date();
+  const record=document.createElement("p");
+  record.innerText="แจ้งเตือนเวลา: "+now.toLocaleString();
+  document.getElementById("history").appendChild(record);
 }
 </script>
 
