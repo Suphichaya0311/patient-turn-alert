@@ -10,11 +10,11 @@ body{
   margin:0;
   font-family:'Segoe UI',sans-serif;
   background:#e6fff4;
-  overflow-x:hidden;
   color:#065f46;
+  overflow-x:hidden;
 }
 
-/* วงกลมลอย */
+/* ===== วงกลมลอย ===== */
 .circle{
   position:fixed;
   border-radius:50%;
@@ -32,7 +32,7 @@ body{
   100%{transform:translateY(0);}
 }
 
-/* เส้นชีพจร */
+/* ===== เส้นชีพจร ===== */
 .heartbeat-line{
   position:fixed;
   bottom:0;
@@ -48,45 +48,39 @@ body{
   100%{transform:translateX(-50%);}
 }
 
-/* วิดีโอพื้นหลัง */
-video{
+/* ===== Welcome ===== */
+#welcome{
   position:fixed;
+  width:100%;
+  height:100vh;
+  overflow:hidden;
+  z-index:10;
+}
+
+#welcome video{
+  position:absolute;
   width:100%;
   height:100%;
   object-fit:cover;
   filter:blur(6px) brightness(60%);
-  z-index:-2;
 }
 
-/* Glass Box */
-.glass{
-  background:rgba(255,255,255,0.2);
-  backdrop-filter:blur(15px);
-  border-radius:25px;
-  box-shadow:0 0 30px rgba(16,185,129,0.8);
-  padding:40px;
-  margin:auto;
-  max-width:700px;
+.overlay{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
   text-align:center;
-}
-
-/* Welcome */
-#welcome{
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
-#welcome h1{
-  font-size:50px;
   color:white;
+  padding:60px;
+  border-radius:30px;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(15px);
+  box-shadow:0 0 40px rgba(16,185,129,0.8);
 }
 
-#welcome p{
-  color:white;
-  font-size:20px;
-}
+.overlay h1{font-size:50px;}
+.overlay p{font-size:20px;margin-bottom:20px;}
 
 button{
   padding:12px 30px;
@@ -98,17 +92,24 @@ button{
   cursor:pointer;
   font-size:16px;
   box-shadow:0 0 15px #34d399;
-  transition:0.3s;
 }
 
-button:hover{
-  transform:scale(1.1);
-}
+button:hover{transform:scale(1.05);}
 
-/* Main */
+/* ===== ระบบหลัก ===== */
 #main{
   display:none;
-  padding:100px 20px;
+  padding:80px 20px;
+  text-align:center;
+}
+
+.card{
+  background:white;
+  padding:40px;
+  border-radius:25px;
+  box-shadow:0 0 30px #34d399;
+  max-width:700px;
+  margin:auto;
 }
 
 input{
@@ -130,24 +131,45 @@ input{
   border-radius:15px;
   box-shadow:0 0 10px #34d399;
 }
+
+/* ===== แจ้งเตือนเต็มจอ ===== */
+#alertBox{
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.7);
+  justify-content:center;
+  align-items:center;
+  z-index:20;
+}
+
+.alertContent{
+  background:white;
+  padding:40px;
+  border-radius:20px;
+  text-align:center;
+  box-shadow:0 0 30px red;
+}
 </style>
 </head>
 
 <body>
-
-<!-- วิดีโอพื้นหลัง -->
-<video id="bgVideo" autoplay muted loop playsinline>
-  <source src="เต้น.mp4" type="video/mp4">
-</video>
 
 <div class="circle"></div>
 <div class="circle"></div>
 <div class="circle"></div>
 <div class="heartbeat-line"></div>
 
-<!-- Welcome -->
+<!-- ===== หน้า Welcome ===== -->
 <div id="welcome">
-  <div class="glass">
+  <video id="bgVideo" autoplay muted loop playsinline>
+    <source src="เต้น.mp4" type="video/mp4">
+  </video>
+
+  <div class="overlay">
     <h1>Turning Care System</h1>
     <p>ระบบแจ้งเตือนการพลิกตัวผู้ป่วยอัตโนมัติ</p>
     <button onclick="toggleSound()">🔊 เปิดเสียง</button>
@@ -155,13 +177,17 @@ input{
   </div>
 </div>
 
-<!-- ระบบหลัก -->
+<!-- ===== ระบบหลัก ===== -->
 <div id="main">
-  <div class="glass">
+  <div class="card">
     <h2>ตั้งเวลาแจ้งเตือน (วินาที)</h2>
-    <input type="number" id="seconds">
+    <input type="number" id="seconds" placeholder="เช่น 10">
     <button onclick="startTimer()">เริ่ม</button>
     <h3 id="countdown"></h3>
+
+    <br>
+    <button onclick="startCamera()">เปิดกล้อง</button>
+    <button onclick="stopCamera()">ปิดกล้อง</button>
 
     <video id="camera" autoplay></video>
 
@@ -169,6 +195,14 @@ input{
     <div id="album"></div>
 
     <button onclick="goHome()">กลับหน้าแรก</button>
+  </div>
+</div>
+
+<!-- ===== แจ้งเตือน ===== -->
+<div id="alertBox">
+  <div class="alertContent">
+    <h2>ถึงเวลาพลิกตัวผู้ป่วย!</h2>
+    <button onclick="closeAlert()">ปิด</button>
   </div>
 </div>
 
@@ -184,13 +218,14 @@ function toggleSound(){
 
 function enterSystem(){
   document.getElementById("welcome").style.display="none";
+  document.getElementById("bgVideo").pause();
   document.getElementById("main").style.display="block";
-  startCamera();
 }
 
 function goHome(){
   document.getElementById("main").style.display="none";
-  document.getElementById("welcome").style.display="flex";
+  document.getElementById("welcome").style.display="block";
+  document.getElementById("bgVideo").play();
 }
 
 function startCamera(){
@@ -201,6 +236,12 @@ function startCamera(){
   });
 }
 
+function stopCamera(){
+  if(stream){
+    stream.getTracks().forEach(track=>track.stop());
+  }
+}
+
 function startTimer(){
   let sec=document.getElementById("seconds").value;
   let count=sec;
@@ -209,14 +250,26 @@ function startTimer(){
     count--;
     if(count<0){
       clearInterval(timer);
-      alert("ถึงเวลาพลิกตัวผู้ป่วย");
+      showAlert();
       capturePhoto();
     }
   },1000);
 }
 
+function showAlert(){
+  document.getElementById("alertBox").style.display="flex";
+  let audio=new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
+  audio.play();
+}
+
+function closeAlert(){
+  document.getElementById("alertBox").style.display="none";
+}
+
 function capturePhoto(){
   const video=document.getElementById("camera");
+  if(!video.srcObject) return;
+
   const canvas=document.createElement("canvas");
   canvas.width=video.videoWidth;
   canvas.height=video.videoHeight;
