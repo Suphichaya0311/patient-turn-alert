@@ -1,76 +1,314 @@
-let countdown;
-let timeLeft = 0;
-let historyData = [];
-let alarmSound = new Audio("alarm.mp3");
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turning Care System</title>
 
-function startTimer(hours, minutes, seconds){
-    timeLeft = hours*3600 + minutes*60 + seconds;
-
-    countdown = setInterval(()=>{
-        timeLeft--;
-
-        let h = Math.floor(timeLeft/3600);
-        let m = Math.floor((timeLeft%3600)/60);
-        let s = timeLeft%60;
-
-        document.getElementById("countdown").innerText =
-            `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-
-        if(timeLeft <= 10){
-            document.getElementById("countdown").style.color="red";
-        }
-
-        if(timeLeft <= 0){
-            clearInterval(countdown);
-            triggerAlert();
-        }
-
-    },1000);
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#e6fff4;
+  overflow-x:hidden;
 }
 
-function triggerAlert(){
-    document.getElementById("alertBox").style.display="flex";
-    alarmSound.play();
-    capturePhoto();
+/* วงกลมลอย */
+.circle{
+  position:fixed;
+  border-radius:50%;
+  background:rgba(16,185,129,0.2);
+  animation:float 8s infinite ease-in-out;
+  z-index:-1;
+}
+.circle:nth-child(1){width:200px;height:200px;top:10%;left:5%;}
+.circle:nth-child(2){width:150px;height:150px;bottom:15%;right:10%;animation-delay:2s;}
+.circle:nth-child(3){width:250px;height:250px;top:50%;left:70%;animation-delay:4s;}
 
-    setTimeout(()=>{
-        document.getElementById("alertBox").style.display="none";
-        alarmSound.pause();
-        alarmSound.currentTime=0;
-    },5000);
+@keyframes float{
+  0%{transform:translateY(0);}
+  50%{transform:translateY(-30px);}
+  100%{transform:translateY(0);}
+}
+
+/* เส้นชีพจร */
+.heartbeat-line{
+  position:fixed;
+  bottom:0;
+  width:200%;
+  height:80px;
+  background:url('https://svgshare.com/i/14Yp.svg') repeat-x;
+  background-size:contain;
+  animation:moveLine 8s linear infinite;
+  opacity:0.5;
+}
+@keyframes moveLine{
+  0%{transform:translateX(0);}
+  100%{transform:translateX(-50%);}
+}
+
+/* Welcome */
+#welcome{
+  position:fixed;
+  width:100%;
+  height:100vh;
+  overflow:hidden;
+  z-index:10;
+}
+#welcome video{
+  position:absolute;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  filter:blur(6px) brightness(60%);
+}
+.overlay{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  text-align:center;
+  color:white;
+  padding:60px;
+  border-radius:30px;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(15px);
+  box-shadow:0 0 40px rgba(16,185,129,0.8);
+}
+
+/* Main */
+#main{
+  display:none;
+  padding:40px;
+  min-height:100vh;
+}
+
+.card{
+  background:white;
+  padding:30px;
+  border-radius:25px;
+  box-shadow:0 0 30px #34d399;
+  max-width:900px;
+  margin:auto;
+  text-align:center;
+}
+
+input{
+  width:70px;
+  padding:8px;
+  margin:5px;
+  border-radius:8px;
+  border:1px solid #10b981;
+  text-align:center;
+}
+
+button{
+  padding:10px 20px;
+  margin:8px;
+  border:none;
+  border-radius:20px;
+  background:#10b981;
+  color:white;
+  cursor:pointer;
+}
+
+#camera{
+  width:100%;
+  margin-top:20px;
+  border-radius:15px;
+}
+
+#album img{
+  width:120px;
+  margin:10px;
+  border-radius:10px;
+}
+
+#history{
+  margin-top:20px;
+  text-align:left;
+}
+
+/* แจ้งเตือนแดงเต็มจอ */
+#alertBox{
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:red;
+  color:white;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  font-size:40px;
+  font-weight:bold;
+  z-index:50;
+}
+</style>
+</head>
+
+<body>
+
+<div class="circle"></div>
+<div class="circle"></div>
+<div class="circle"></div>
+<div class="heartbeat-line"></div>
+
+<!-- หน้าแรก -->
+<div id="welcome">
+  <video id="bgVideo" autoplay muted loop playsinline>
+    <source src="เต้น.mp4" type="video/mp4">
+  </video>
+  <div class="overlay">
+    <h1>Turning Care System</h1>
+    <button onclick="toggleSound()">🔊 เปิดเสียง</button>
+    <button onclick="enterSystem()">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- หน้าแอป -->
+<div id="main">
+  <div class="card">
+
+    <h2>ตั้งเวลาแจ้งเตือน</h2>
+    <input type="number" id="hours" placeholder="ชม">
+    :
+    <input type="number" id="minutes" placeholder="นาที">
+    :
+    <input type="number" id="seconds" placeholder="วิ">
+
+    <br>
+    <button onclick="startTimer()">เริ่ม</button>
+    <button onclick="stopTimer()">หยุด</button>
+
+    <h3 id="countdown"></h3>
+
+    <button onclick="startCamera()">เปิดกล้อง</button>
+    <button onclick="stopCamera()">ปิดกล้อง</button>
+
+    <video id="camera" autoplay></video>
+
+    <h3>ภาพคำแนะนำการพลิกตัว</h3>
+    <img src="เวลาพลิกตัว.jpg" width="250">
+
+    <h3>อัลบั้มรูป</h3>
+    <div id="album"></div>
+
+    <h3>ประวัติการแจ้งเตือน</h3>
+    <div id="history"></div>
+
+    <button onclick="goHome()">กลับหน้าแรก</button>
+
+  </div>
+</div>
+
+<!-- แจ้งเตือนแดง -->
+<div id="alertBox">
+  ถึงเวลาพลิกตัวผู้ป่วย!
+  <button onclick="closeAlert()">ปิด</button>
+</div>
+
+<script>
+let timer;
+let stream;
+
+function toggleSound(){
+  const video=document.getElementById("bgVideo");
+  video.muted=false;
+  video.play();
+}
+
+function enterSystem(){
+  document.getElementById("welcome").style.display="none";
+  document.getElementById("bgVideo").pause();
+  document.getElementById("main").style.display="block";
+}
+
+function goHome(){
+  document.getElementById("main").style.display="none";
+  document.getElementById("welcome").style.display="block";
+  document.getElementById("bgVideo").play();
+}
+
+function startCamera(){
+  navigator.mediaDevices.getUserMedia({video:true})
+  .then(s=>{
+    stream=s;
+    document.getElementById("camera").srcObject=s;
+  });
+}
+
+function stopCamera(){
+  if(stream){
+    stream.getTracks().forEach(track=>track.stop());
+  }
+}
+
+function startTimer(){
+  let h=parseInt(document.getElementById("hours").value)||0;
+  let m=parseInt(document.getElementById("minutes").value)||0;
+  let s=parseInt(document.getElementById("seconds").value)||0;
+
+  let total=h*3600+m*60+s;
+
+  timer=setInterval(()=>{
+    let displayH=Math.floor(total/3600);
+    let displayM=Math.floor((total%3600)/60);
+    let displayS=total%60;
+
+    document.getElementById("countdown").innerText=
+      displayH+"ชม "+displayM+"นาที "+displayS+"วิ";
+
+    total--;
+
+    if(total<0){
+      clearInterval(timer);
+      showAlert();
+      capturePhoto();
+      saveHistory();
+    }
+  },1000);
+}
+
+function stopTimer(){
+  clearInterval(timer);
+}
+
+function showAlert(){
+  document.getElementById("alertBox").style.display="flex";
+  let audio=new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
+  audio.play();
+}
+
+function closeAlert(){
+  document.getElementById("alertBox").style.display="none";
 }
 
 function capturePhoto(){
-    let now = new Date();
-    let timeString = now.toLocaleString();
+  const video=document.getElementById("camera");
+  if(!video.srcObject) return;
 
-    let imgSrc = document.getElementById("cameraPreview").src;
+  const canvas=document.createElement("canvas");
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
+  const ctx=canvas.getContext("2d");
+  ctx.drawImage(video,0,0);
 
-    historyData.unshift({img:imgSrc,time:timeString});
-    renderGallery();
+  const img=document.createElement("img");
+  img.src=canvas.toDataURL("image/png");
+
+  document.getElementById("album").appendChild(img);
 }
 
-function renderGallery(){
-    let gallery = document.getElementById("gallery");
-    gallery.innerHTML="";
-
-    historyData.forEach(data=>{
-        let card = document.createElement("div");
-        card.className="photo-card";
-        card.innerHTML=`
-            <img src="${data.img}">
-            <div class="photo-time">${data.time}</div>
-        `;
-        card.onclick=()=>openModal(data.img);
-        gallery.appendChild(card);
-    });
+function saveHistory(){
+  const now=new Date();
+  const record=document.createElement("p");
+  record.innerText="แจ้งเตือนเวลา: "+now.toLocaleString();
+  document.getElementById("history").appendChild(record);
 }
+</script>
 
-function openModal(src){
-    document.getElementById("modalImg").src=src;
-    document.getElementById("imageModal").style.display="flex";
-}
-
-function closeModal(){
-    document.getElementById("imageModal").style.display="none";
-}
+</body>
+</html>
