@@ -1,369 +1,76 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<title>ระบบแจ้งเตือนการพลิกตัวผู้ป่วย</title>
-
-<style>
-body{
-    margin:0;
-    font-family:'Segoe UI',sans-serif;
-    background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-    color:white;
-    overflow-x:hidden;
-}
-
-/* ---------- FLOATING BG ---------- */
-.circle{
-    position:fixed;
-    border-radius:50%;
-    background:rgba(0,255,170,0.08);
-    animation:float 12s infinite ease-in-out;
-    z-index:-1;
-}
-.circle:nth-child(1){width:250px;height:250px;top:5%;left:5%;}
-.circle:nth-child(2){width:350px;height:350px;bottom:5%;right:5%;}
-.circle:nth-child(3){width:200px;height:200px;top:50%;left:40%;}
-
-@keyframes float{
-    0%,100%{transform:translateY(0);}
-    50%{transform:translateY(-30px);}
-}
-
-/* ---------- COVER ---------- */
-#cover{
-    position:relative;
-    height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-}
-
-#cover video{
-    position:absolute;
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    filter:blur(10px) brightness(60%);
-    z-index:-1;
-}
-
-.cover-box{
-    background:rgba(255,255,255,0.1);
-    backdrop-filter:blur(20px);
-    padding:60px;
-    border-radius:25px;
-    box-shadow:0 0 40px rgba(0,255,170,0.6);
-    animation:fadeIn 2s ease;
-}
-
-@keyframes fadeIn{
-    from{opacity:0;transform:translateY(20px);}
-    to{opacity:1;}
-}
-
-button{
-    padding:12px 25px;
-    border:none;
-    border-radius:12px;
-    background:#00ffaa;
-    color:black;
-    font-weight:bold;
-    cursor:pointer;
-    transition:0.3s;
-}
-button:hover{
-    transform:scale(1.05);
-    box-shadow:0 0 20px #00ffaa;
-}
-
-/* ---------- SYSTEM ---------- */
-#system{
-    display:none;
-    padding:40px;
-    text-align:center;
-}
-
-input{
-    padding:10px;
-    width:70px;
-    text-align:center;
-    border-radius:10px;
-    border:none;
-    margin:5px;
-}
-
-#countdown{
-    font-size:65px;
-    margin:20px;
-    font-weight:bold;
-    color:#00ffaa;
-    transition:0.3s;
-}
-
-/* ---------- ALERT ---------- */
-#alertBox{
-    position:fixed;
-    top:0;left:0;
-    width:100%;
-    height:100%;
-    background:red;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    font-size:55px;
-    font-weight:bold;
-    z-index:999;
-    animation:flash 1s infinite;
-}
-@keyframes flash{
-    0%,100%{opacity:1;}
-    50%{opacity:0.5;}
-}
-
-/* ---------- CARD STYLE ---------- */
-.card{
-    background:rgba(255,255,255,0.1);
-    backdrop-filter:blur(15px);
-    padding:25px;
-    border-radius:20px;
-    margin:20px auto;
-    width:80%;
-    box-shadow:0 0 30px rgba(0,255,170,0.4);
-}
-
-/* ---------- GALLERY ---------- */
-.gallery{
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    gap:20px;
-}
-
-.photo-card{
-    background:rgba(255,255,255,0.1);
-    border-radius:20px;
-    overflow:hidden;
-    width:220px;
-    box-shadow:0 0 20px rgba(0,255,170,0.5);
-    cursor:pointer;
-    transition:0.3s;
-}
-.photo-card:hover{
-    transform:translateY(-10px) scale(1.05);
-    box-shadow:0 0 40px rgba(0,255,170,0.9);
-}
-.photo-card img{
-    width:100%;
-    height:180px;
-    object-fit:cover;
-}
-.photo-time{
-    padding:10px;
-    font-size:14px;
-}
-
-/* ---------- MODAL ---------- */
-#imageModal{
-    position:fixed;
-    top:0;left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.85);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    z-index:1000;
-}
-#imageModal img{
-    max-width:80%;
-    max-height:80%;
-    border-radius:20px;
-    box-shadow:0 0 40px #00ffaa;
-}
-.closeBtn{
-    position:absolute;
-    top:20px;
-    right:40px;
-    font-size:40px;
-    cursor:pointer;
-}
-</style>
-</head>
-
-<body>
-
-<div id="cover">
-<video autoplay muted loop>
-<source src="เต้น.mp4" type="video/mp4">
-</video>
-
-<div class="cover-box">
-<h1>ระบบแจ้งเตือนการพลิกตัวผู้ป่วย</h1>
-<p>Senior Care Smart Alert System</p>
-<button onclick="enterSystem()">เข้าสู่ระบบ</button>
-</div>
-</div>
-
-<div id="system">
-
-<div class="card">
-<h2>ตั้งเวลาแจ้งเตือน</h2>
-<input type="number" id="hours" placeholder="ชม">
-<input type="number" id="minutes" placeholder="นาที">
-<input type="number" id="seconds" placeholder="วิ">
-<br><br>
-<button onclick="startTimer()">เริ่ม</button>
-<button onclick="toggleCamera()">เปิด/ปิด กล้อง</button>
-<button onclick="toggleMusic()">เปิด/ปิด เพลง</button>
-<div id="countdown">00:00:00</div>
-</div>
-
-<div class="card">
-<h3>ตัวอย่างท่าพลิกตัว</h3>
-<img src="เวลาพลิกตัว.jpg" width="300">
-</div>
-
-<div class="card">
-<h2>อัลบั้มภาพ</h2>
-<div class="gallery" id="gallery"></div>
-</div>
-
-<video id="camera" width="300" autoplay style="display:none;"></video>
-<canvas id="canvas" style="display:none;"></canvas>
-
-</div>
-
-<div id="alertBox">⚠ ถึงเวลาพลิกตัวผู้ป่วย ⚠</div>
-
-<div id="imageModal">
-<span class="closeBtn" onclick="closeModal()">✖</span>
-<img id="modalImg">
-</div>
-
-<div class="circle"></div>
-<div class="circle"></div>
-<div class="circle"></div>
-
-<audio id="alarmSound" src="alarm.mp3"></audio>
-<audio id="bgMusic" src="music.mp3" loop></audio>
-
-<script>
 let countdown;
-let stream;
-let historyData=[];
-const bgMusic=document.getElementById("bgMusic");
+let timeLeft = 0;
+let historyData = [];
+let alarmSound = new Audio("alarm.mp3");
 
-function enterSystem(){
-cover.style.display="none";
-system.style.display="block";
-bgMusic.play();
-}
+function startTimer(hours, minutes, seconds){
+    timeLeft = hours*3600 + minutes*60 + seconds;
 
-function toggleMusic(){
-if(bgMusic.paused){bgMusic.play();}
-else{bgMusic.pause();}
-}
+    countdown = setInterval(()=>{
+        timeLeft--;
 
-function startTimer(){
-let h=parseInt(hours.value)||0;
-let m=parseInt(minutes.value)||0;
-let s=parseInt(seconds.value)||0;
-let timeLeft=h*3600+m*60+s;
+        let h = Math.floor(timeLeft/3600);
+        let m = Math.floor((timeLeft%3600)/60);
+        let s = timeLeft%60;
 
-clearInterval(countdown);
+        document.getElementById("countdown").innerText =
+            `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
 
-countdown=setInterval(()=>{
-timeLeft--;
+        if(timeLeft <= 10){
+            document.getElementById("countdown").style.color="red";
+        }
 
-let hh=Math.floor(timeLeft/3600);
-let mm=Math.floor((timeLeft%3600)/60);
-let ss=timeLeft%60;
+        if(timeLeft <= 0){
+            clearInterval(countdown);
+            triggerAlert();
+        }
 
-countdownDisplay.innerText=
-`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-
-if(timeLeft<=60) countdownDisplay.style.color="orange";
-if(timeLeft<=10){
-countdownDisplay.style.color="red";
-countdownDisplay.style.transform="scale(1.1)";
-}
-
-if(timeLeft<=0){
-clearInterval(countdown);
-triggerAlert();
-}
-
-},1000);
+    },1000);
 }
 
 function triggerAlert(){
-alertBox.style.display="flex";
-alarmSound.play();
-capturePhoto();
+    document.getElementById("alertBox").style.display="flex";
+    alarmSound.play();
+    capturePhoto();
 
-setTimeout(()=>{
-alertBox.style.display="none";
-alarmSound.pause();
-alarmSound.currentTime=0;
-},5000);
-}
-
-function toggleCamera(){
-const video=document.getElementById("camera");
-if(video.style.display==="none"){
-navigator.mediaDevices.getUserMedia({video:true})
-.then(s=>{
-stream=s;
-video.srcObject=s;
-video.style.display="block";
-});
-}else{
-stream.getTracks().forEach(track=>track.stop());
-video.style.display="none";
-}
+    setTimeout(()=>{
+        document.getElementById("alertBox").style.display="none";
+        alarmSound.pause();
+        alarmSound.currentTime=0;
+    },5000);
 }
 
 function capturePhoto(){
-const video=document.getElementById("camera");
-if(video.style.display==="none") return;
+    let now = new Date();
+    let timeString = now.toLocaleString();
 
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
-canvas.width=video.videoWidth;
-canvas.height=video.videoHeight;
-ctx.drawImage(video,0,0);
+    let imgSrc = document.getElementById("cameraPreview").src;
 
-let imgData=canvas.toDataURL("image/png");
-let now=new Date().toLocaleString();
-
-historyData.unshift({img:imgData,time:now});
-renderGallery();
+    historyData.unshift({img:imgSrc,time:timeString});
+    renderGallery();
 }
 
 function renderGallery(){
-gallery.innerHTML="";
-historyData.forEach(data=>{
-let card=document.createElement("div");
-card.className="photo-card";
-card.innerHTML=`
-<img src="${data.img}">
-<div class="photo-time">${data.time}</div>
-`;
-card.onclick=()=>openModal(data.img);
-gallery.appendChild(card);
-});
+    let gallery = document.getElementById("gallery");
+    gallery.innerHTML="";
+
+    historyData.forEach(data=>{
+        let card = document.createElement("div");
+        card.className="photo-card";
+        card.innerHTML=`
+            <img src="${data.img}">
+            <div class="photo-time">${data.time}</div>
+        `;
+        card.onclick=()=>openModal(data.img);
+        gallery.appendChild(card);
+    });
 }
 
 function openModal(src){
-modalImg.src=src;
-imageModal.style.display="flex";
+    document.getElementById("modalImg").src=src;
+    document.getElementById("imageModal").style.display="flex";
 }
-function closeModal(){
-imageModal.style.display="none";
-}
-</script>
 
-</body>
-</html>
+function closeModal(){
+    document.getElementById("imageModal").style.display="none";
+}
